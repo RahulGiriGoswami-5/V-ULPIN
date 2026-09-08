@@ -1,10 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TopGovStrip } from '../../components/layout';
-import {
-  Map, Shield, FileSearch, Layers, Lock,
-  ArrowRight, CheckCircle, Building2,
-} from 'lucide-react';
+import { Shield, ArrowRight, Building2 } from 'lucide-react';
+import StaggerFeatures from '../../components/ui/stagger-features';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -55,47 +53,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="home-features">
-        <div className="container">
-          <h2>Built for India's Land Administration</h2>
-          <p className="subtitle">
-            A unified platform connecting citizens and government for accurate, tamper-proof 3D property registration
-          </p>
-          <div className="feature-grid">
-            <div className="feature-item">
-              <div className="feature-icon"><Layers size={20} /></div>
-              <h4>3D Vertical Identity</h4>
-              <p>Extends the existing ULPIN/Bhu-Aadhaar to capture building, floor, and unit — enabling precise sub-parcel identification in multi-storey properties.</p>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon"><Map size={20} /></div>
-              <h4>AI-Powered GIS Mapping</h4>
-              <p>Spatial validation, conflict detection, and infrastructure analysis integrated directly into the 3D GIS workflow for government officials.</p>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon"><Lock size={20} /></div>
-              <h4>Encrypted V-ULPIN Transfer</h4>
-              <p>V-ULPIN data is encrypted before citizen-to-government transfer, ensuring tamper-proof identity with a verifiable chain of custody.</p>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon"><CheckCircle size={20} /></div>
-              <h4>Data Integrity Scoring</h4>
-              <p>Every property gets an automated integrity score based on spatial accuracy, ownership match, record completeness and cross-validation.</p>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon"><FileSearch size={20} /></div>
-              <h4>Spatial Conflict Detection</h4>
-              <p>Automatically detects parcel overlaps, boundary mismatches, infrastructure corridor conflicts and elevation inconsistencies.</p>
-            </div>
-            <div className="feature-item">
-              <div className="feature-icon"><Building2 size={20} /></div>
-              <h4>Urban Planning Integration</h4>
-              <p>Simulate proposed construction against existing infrastructure, road clearances, metro corridors and utility networks in the GIS environment.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Interactive Staggered Features Section */}
+      <StaggerFeatures />
 
       {/* Workflow strip */}
       <section style={{ background: 'var(--navy-900)', padding: '2.5rem 1.5rem' }}>
