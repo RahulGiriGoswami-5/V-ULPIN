@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Map, FileText, Search, CheckSquare,
-  BarChart2, BookOpen, HelpCircle, LogOut, User, Menu, X, ChevronRight,
+  HelpCircle, LogOut, User, Menu, X, ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AppContext';
 
@@ -49,8 +49,6 @@ const govNavItems = [
   { label: 'Land Records',icon: FileText,         path: '/government/records' },
   { label: 'ULPIN Search',icon: Search,           path: '/government/search' },
   { label: 'Validation',  icon: CheckSquare,      path: '/government/validation' },
-  { label: 'Analytics',   icon: BarChart2,        path: '/government/analytics' },
-  { label: 'Reports',     icon: BookOpen,         path: '/government/reports' },
   { label: 'Help',        icon: HelpCircle,       path: '/government/help' },
 ];
 

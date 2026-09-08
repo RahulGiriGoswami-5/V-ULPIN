@@ -1,24 +1,21 @@
 import React, { useState } from 'react';
 import {
-  MapPin, Layers, ZoomIn, ZoomOut, RotateCcw,
-  Navigation, Maximize2, Eye, EyeOff,
+  MapPin, ZoomIn, ZoomOut, RotateCcw,
+  Navigation, Maximize2,
 } from 'lucide-react';
-import { useApp } from '../../context/AppContext';
 
 // ── Citizen 3D Map Container ─────────────────────────────────
 // Integration contract: accepts selectedProperty, selectedFloor, selectedUnit,
-// coordinates, activeLayers, highlightMode.
+// coordinates, highlightMode.
 // Exposes: onPropertySelected, onFloorSelected, onUnitSelected, onMapLocationChanged.
 //
-// TODO: Replace the placeholder render below with your actual 3D map component.
-// All props and callbacks will continue to work.
+// All props and callbacks continue to work.
 
 export function Citizen3DMapContainer({
   selectedProperty,
   selectedFloor,
   selectedUnit,
   coordinates,
-  activeLayers = [],
   onPropertySelected,
   onFloorSelected,
   onUnitSelected,
@@ -40,7 +37,6 @@ export function Citizen3DMapContainer({
     <div className="map-container" style={{ minHeight: 360, borderRadius: 8 }}>
       {/* ── 3D Map Placeholder ── */}
       {/* INSERT YOUR EXISTING 3D MAP COMPONENT HERE */}
-      {/* It will receive: selectedProperty, selectedFloor, selectedUnit, coordinates, activeLayers */}
       <div className="map-placeholder">
         <div className="map-placeholder-icon">
           <MapPin size={32} color="var(--neutral-400)" />
@@ -80,25 +76,21 @@ export function Citizen3DMapContainer({
         <button className="map-control-btn" title="Zoom Out" onClick={handleZoomOut}><ZoomOut size={14} /></button>
         <button className="map-control-btn" title="Reset View" onClick={handleReset}><RotateCcw size={14} /></button>
         <button className="map-control-btn" title="Navigate" onClick={() => onMapLocationChanged?.({ lat: coord.lat, lng: coord.lng })}><Navigation size={14} /></button>
-        <button className={`map-control-btn ${showLegend ? 'active' : ''}`} title="Toggle Legend" onClick={() => setShowLegend(l => !l)}><Layers size={14} /></button>
       </div>
 
       {/* Legend */}
-      {showLegend && (
+      {showLegend && selectedProperty && (
         <div className="map-legend">
-          <div className="map-legend-title">Map Legend</div>
+          <div className="map-legend-title">Legend</div>
           <div className="map-legend-item"><div className="legend-dot" style={{ background: '#1a2744' }} /> Selected Property</div>
           <div className="map-legend-item"><div className="legend-dot" style={{ background: '#e8681a' }} /> Active Floor</div>
           <div className="map-legend-item"><div className="legend-dot" style={{ background: '#16a34a' }} /> Verified Unit</div>
-          {activeLayers.map(l => (
-            <div key={l} className="map-legend-item"><div className="legend-dot" style={{ background: '#adb5bd' }} /> {l}</div>
-          ))}
         </div>
       )}
 
       {/* Status bar */}
       <div className="map-status-bar">
-        <span>Zoom: {zoom} | Layers: {activeLayers.length || 0} active</span>
+        <span>Zoom: {zoom}</span>
         <div className="map-coord-badge">
           {coord.lat.toFixed(4)}°N, {coord.lng.toFixed(4)}°E
           {coord.elevation ? ` · ${coord.elevation}m` : ''}
@@ -110,11 +102,9 @@ export function Citizen3DMapContainer({
 
 // ── Government 3D Map Container ──────────────────────────────
 // Integration contract: accepts selectedProperty, selectedULPIN, selectedParcel,
-// selectedFloor, selectedUnit, coordinates, activeLayers, selectedConflict, highlightMode.
+// selectedFloor, selectedUnit, coordinates, selectedConflict, highlightMode.
 // Exposes: onPropertySelected, onFloorSelected, onUnitSelected,
 //          onMapLocationChanged, onConflictSelected.
-//
-// TODO: Replace placeholder with your existing government 3D map component.
 
 export function Government3DMapContainer({
   selectedProperty,
@@ -123,7 +113,6 @@ export function Government3DMapContainer({
   selectedFloor,
   selectedUnit,
   coordinates,
-  activeLayers = [],
   selectedConflict,
   highlightMode,
   onPropertySelected,
@@ -133,7 +122,6 @@ export function Government3DMapContainer({
   onConflictSelected,
 }) {
   const [zoom, setZoom] = useState(15);
-  const [showLegend, setShowLegend] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleZoomIn  = () => setZoom(z => Math.min(z + 1, 20));
@@ -142,28 +130,13 @@ export function Government3DMapContainer({
 
   const coord = coordinates || selectedProperty?.coordinates || { lat: 20.5937, lng: 78.9629, elevation: 0 };
 
-  // Layer color map for legend
-  const layerColors = {
-    Buildings:                '#1a2744',
-    Parcels:                  '#e8681a',
-    Roads:                    '#6c757d',
-    'Water Pipelines':        '#2563eb',
-    Electricity:              '#d97706',
-    Sewage:                   '#7c3aed',
-    Metro:                    '#dc2626',
-    'Underground Infrastructure': '#92400e',
-    'Rights of Way':          '#059669',
-  };
-
   return (
     <div className="map-container" style={{ position: 'relative' }}>
       {/* ── 3D GIS Map Placeholder ── */}
       {/* INSERT YOUR EXISTING GOVERNMENT 3D MAP COMPONENT HERE */}
-      {/* It will receive: selectedProperty, selectedULPIN, selectedParcel, */}
-      {/*   selectedFloor, selectedUnit, coordinates, activeLayers, selectedConflict */}
       <div className="map-placeholder">
         <div className="map-placeholder-icon">
-          <Layers size={32} color="var(--neutral-400)" />
+          <MapPin size={32} color="var(--navy-600)" />
         </div>
         {selectedProperty ? (
           <>
@@ -177,13 +150,13 @@ export function Government3DMapContainer({
               </p>
             )}
             <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--neutral-400)' }}>
-              {activeLayers.length} layer{activeLayers.length !== 1 ? 's' : ''} active · 3D Map renders here upon integration
+              3D Map renders here upon integration
             </p>
           </>
         ) : (
           <>
             <h3>Government 3D GIS</h3>
-            <p>Search or select a property to view it on the 3D map. Toggle infrastructure layers using the controls.</p>
+            <p>Search or select a property to view it on the 3D GIS map.</p>
           </>
         )}
       </div>
@@ -217,30 +190,14 @@ export function Government3DMapContainer({
         <button className="map-control-btn" title="Navigate to Property" onClick={() => onMapLocationChanged?.({ lat: coord.lat, lng: coord.lng })}>
           <Navigation size={14} />
         </button>
-        <button className={`map-control-btn ${showLegend ? 'active' : ''}`} title="Toggle Legend" onClick={() => setShowLegend(l => !l)}>
-          <Layers size={14} />
-        </button>
         <button className="map-control-btn" title="Fullscreen" onClick={() => setIsFullscreen(f => !f)}>
           <Maximize2 size={14} />
         </button>
       </div>
 
-      {/* Layer legend */}
-      {showLegend && activeLayers.length > 0 && (
-        <div className="map-legend">
-          <div className="map-legend-title">Active Layers</div>
-          {activeLayers.map(l => (
-            <div key={l} className="map-legend-item">
-              <div className="legend-dot" style={{ background: layerColors[l] || '#adb5bd' }} />
-              {l}
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Status bar */}
       <div className="map-status-bar">
-        <span>Zoom: {zoom} · {activeLayers.length} layer{activeLayers.length !== 1 ? 's' : ''} active{highlightMode ? ` · Mode: ${highlightMode}` : ''}</span>
+        <span>Zoom: {zoom}{highlightMode ? ` · Mode: ${highlightMode}` : ''}</span>
         <div className="map-coord-badge">
           {coord.lat.toFixed(4)}°N, {coord.lng.toFixed(4)}°E · {coord.elevation || 0}m
         </div>

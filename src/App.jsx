@@ -21,8 +21,6 @@ import GISPage from './pages/government/GISPage';
 import LandRecordsPage from './pages/government/LandRecordsPage';
 import ULPINSearch from './pages/government/ULPINSearch';
 import ValidationPage from './pages/government/ValidationPage';
-import AnalyticsPage from './pages/government/AnalyticsPage';
-import ReportsPage from './pages/government/ReportsPage';
 import HelpPage from './pages/government/HelpPage';
 
 // ── Route Guards ─────────────────────────────────────────────
@@ -56,8 +54,6 @@ function AppRoutes() {
         <Route path="/government/records"    element={<RequireAuth role="government"><LandRecordsPage /></RequireAuth>} />
         <Route path="/government/search"     element={<RequireAuth role="government"><ULPINSearch /></RequireAuth>} />
         <Route path="/government/validation" element={<RequireAuth role="government"><ValidationPage /></RequireAuth>} />
-        <Route path="/government/analytics"  element={<RequireAuth role="government"><AnalyticsPage /></RequireAuth>} />
-        <Route path="/government/reports"    element={<RequireAuth role="government"><ReportsPage /></RequireAuth>} />
         <Route path="/government/help"       element={<RequireAuth role="government"><HelpPage /></RequireAuth>} />
 
         {/* Catch-all */}

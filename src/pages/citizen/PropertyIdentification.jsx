@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CitizenNavbar, TopGovStrip } from '../../components/layout';
 import { useApp } from '../../context/AppContext';
 import { Citizen3DMapContainer } from '../../components/maps';
 import { EmptyState } from '../../components/common';
-import { Building2, ChevronDown, ChevronRight, CheckCircle, ArrowRight, MapPin } from 'lucide-react';
+import { Building2, CheckCircle, ArrowRight, MapPin, Layers } from 'lucide-react';
 
 export default function PropertyIdentification() {
   const { selectedProperty, selectedFloor, selectedUnit, dispatch, notify } = useApp();
   const navigate = useNavigate();
-  const [expandedFloor, setExpandedFloor] = useState(null);
 
   if (!selectedProperty) {
     return (
@@ -30,12 +29,9 @@ export default function PropertyIdentification() {
 
   const floors = selectedProperty.building?.floors || [];
 
-  const handleFloorExpand = (floor) => {
-    setExpandedFloor(expandedFloor?.id === floor.id ? null : floor);
-    if (expandedFloor?.id !== floor.id) {
-      dispatch({ type: 'SET_FLOOR', payload: floor });
-      dispatch({ type: 'SET_UNIT', payload: null });
-    }
+  const handleFloorSelect = (floor) => {
+    dispatch({ type: 'SET_FLOOR', payload: floor });
+    dispatch({ type: 'SET_UNIT', payload: null });
   };
 
   const handleUnitSelect = (unit) => {
@@ -46,133 +42,162 @@ export default function PropertyIdentification() {
   const canProceed = selectedFloor && selectedUnit;
 
   return (
-    <div className="page">
+    <div className="page" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <TopGovStrip />
       <CitizenNavbar />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
-        <div className="page-header">
+        <div className="page-header" style={{ padding: '0.75rem 1.5rem', borderBottom: '1px solid var(--neutral-200)' }}>
           <div className="page-header-inner">
             <div>
-              <h1 className="page-title">3D Property Identification</h1>
-              <p className="page-subtitle">{selectedProperty.location} · {selectedProperty.parcelId}</p>
+              <h1 className="page-title" style={{ fontSize: '1.25rem' }}>3D Property Identification</h1>
+              <p className="page-subtitle" style={{ fontSize: '0.8rem' }}>
+                {selectedProperty.location} · {selectedProperty.parcelId} · {selectedProperty.building?.name}
+              </p>
             </div>
-            {canProceed && (
-              <button className="btn btn-saffron" onClick={() => navigate('/citizen/generate')} id="proceed-generate-btn">
-                Proceed to Generate V-ULPIN <ArrowRight size={15} />
-              </button>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              {canProceed ? (
+                <button className="btn btn-saffron" onClick={() => navigate('/citizen/generate')} id="proceed-generate-btn">
+                  Proceed to Generate V-ULPIN <ArrowRight size={15} />
+                </button>
+              ) : (
+                <div style={{ fontSize: '0.8rem', color: 'var(--neutral-500)', background: 'var(--neutral-100)', padding: '0.4rem 0.85rem', borderRadius: 20 }}>
+                  Select floor and unit below to proceed
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Main content */}
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '320px 1fr', gap: 0, overflow: 'hidden', minHeight: 0 }}>
-          {/* Left: Vertical selector */}
-          <div style={{ background: '#fff', borderRight: '1px solid var(--neutral-200)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            {/* Property info */}
-            <div style={{ padding: '0.875rem 1rem', borderBottom: '1px solid var(--neutral-100)', background: 'var(--navy-900)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <MapPin size={14} color="var(--saffron-400)" />
-                <span style={{ fontWeight: 600, color: '#fff', fontSize: '0.875rem' }}>{selectedProperty.building?.name}</span>
+        {/* Clean, Full-Width Top Control Bar for Vertical Selection */}
+        <div style={{
+          background: '#fff',
+          borderBottom: '1px solid var(--neutral-200)',
+          padding: '0.75rem 1.5rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.625rem',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          zIndex: 10,
+        }}>
+          {/* Top Row: Property & Floor Selection */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--navy-900)', fontWeight: 600, fontSize: '0.85rem' }}>
+                <Building2 size={16} color="var(--navy-800)" />
+                <span>{selectedProperty.building?.name}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', fontWeight: 400 }}>
+                  ({floors.length} Floors · {selectedProperty.building?.totalUnits} Units)
+                </span>
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
-                {selectedProperty.building?.totalUnits} units · {floors.length} floors
-              </div>
-            </div>
 
-            {/* Selection state */}
-            {(selectedFloor || selectedUnit) && (
-              <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--neutral-100)', background: 'var(--green-50)' }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', marginBottom: '0.25rem' }}>Current Selection</div>
-                {selectedFloor && (
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--navy-800)' }}>
-                    {selectedFloor.name}
-                    {selectedUnit && <span style={{ color: 'var(--green-700)' }}> › Unit {selectedUnit} <CheckCircle size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /></span>}
-                  </div>
-                )}
-              </div>
-            )}
+              <div style={{ height: 16, width: 1, background: 'var(--neutral-300)' }} />
 
-            {/* Building tree */}
-            <div style={{ overflowY: 'auto', flex: 1 }}>
-              <div style={{ padding: '0.75rem 1rem', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--neutral-400)', borderBottom: '1px solid var(--neutral-100)' }}>
-                Select Floor &amp; Unit
-              </div>
-              <div className="building-selector" style={{ border: 'none', borderRadius: 0 }}>
+              {/* Floor Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Floor:
+                </span>
                 {floors.map(floor => {
-                  const isExpanded = expandedFloor?.id === floor.id;
-                  const isFloorSelected = selectedFloor?.id === floor.id;
+                  const isSelected = selectedFloor?.id === floor.id;
                   return (
-                    <div className={`floor-item ${isExpanded ? 'expanded' : ''}`} key={floor.id}>
-                      <div
-                        className="floor-item-header"
-                        onClick={() => handleFloorExpand(floor)}
-                        style={{ background: isFloorSelected ? 'var(--neutral-100)' : '' }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Building2 size={14} color={isFloorSelected ? 'var(--navy-800)' : 'var(--neutral-400)'} />
-                          <span className="floor-name" style={{ fontWeight: isFloorSelected ? 600 : 500, color: isFloorSelected ? 'var(--navy-900)' : 'var(--neutral-700)' }}>
-                            {floor.name}
-                          </span>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--neutral-400)', background: 'var(--neutral-100)', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
-                            {floor.units.length} units
-                          </span>
-                        </div>
-                        {isExpanded ? <ChevronDown size={14} color="var(--neutral-400)" /> : <ChevronRight size={14} color="var(--neutral-400)" />}
-                      </div>
-                      {isExpanded && (
-                        <div className="unit-list">
-                          {floor.units.map(unit => (
-                            <button
-                              key={unit}
-                              className={`unit-chip ${selectedUnit === unit && isFloorSelected ? 'selected' : ''}`}
-                              onClick={() => handleUnitSelect(unit)}
-                              id={`unit-${unit}-btn`}
-                            >
-                              {unit}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      key={floor.id}
+                      onClick={() => handleFloorSelect(floor)}
+                      className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-outline'}`}
+                      style={{
+                        padding: '0.25rem 0.65rem',
+                        fontSize: '0.75rem',
+                        borderRadius: 6,
+                        fontWeight: isSelected ? 600 : 500,
+                      }}
+                      id={`floor-${floor.id}-btn`}
+                    >
+                      {floor.name}
+                    </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Property details panel */}
-            <div style={{ padding: '0.875rem 1rem', borderTop: '1px solid var(--neutral-100)', background: 'var(--neutral-50)' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--neutral-400)', marginBottom: '0.5rem' }}>Property Details</div>
-              {[
-                ['Type', selectedProperty.propertyType],
-                ['Area', selectedProperty.landArea],
-                ['Old ULPIN', selectedProperty.oldULPIN],
-                ...(selectedFloor ? [['Floor', selectedFloor.name]] : []),
-                ...(selectedUnit ? [['Unit', selectedUnit]] : []),
-                ...(selectedFloor && selectedUnit ? [['Elevation', `${selectedProperty.coordinates?.elevation}m`]] : []),
-              ].map(([label, val]) => (
-                <div className="info-row" key={label} style={{ padding: '0.3rem 0', borderBottom: '1px solid var(--neutral-100)' }}>
-                  <span className="info-label" style={{ fontSize: '0.75rem' }}>{label}</span>
-                  <span className="info-value" style={{ fontSize: '0.75rem' }}>{val}</span>
-                </div>
-              ))}
-            </div>
+            {/* Selection Summary Pill */}
+            {(selectedFloor || selectedUnit) && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: canProceed ? 'var(--green-50)' : 'var(--amber-50)',
+                border: `1px solid ${canProceed ? 'var(--green-200)' : 'var(--amber-200)'}`,
+                padding: '0.25rem 0.75rem',
+                borderRadius: 20,
+                fontSize: '0.75rem',
+                color: canProceed ? 'var(--green-800)' : 'var(--amber-800)',
+              }}>
+                {selectedFloor && <span>{selectedFloor.name}</span>}
+                {selectedUnit && (
+                  <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    › Unit {selectedUnit} {canProceed && <CheckCircle size={12} color="var(--green-600)" />}
+                  </span>
+                )}
+                {canProceed && (
+                  <span style={{ color: 'var(--green-600)', marginLeft: 4 }}>
+                    (Elev: {selectedProperty.coordinates?.elevation}m)
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Right: Map */}
-          <div style={{ overflow: 'hidden' }}>
-            <Citizen3DMapContainer
-              selectedProperty={selectedProperty}
-              selectedFloor={selectedFloor}
-              selectedUnit={selectedUnit}
-              coordinates={selectedProperty.coordinates}
-              activeLayers={['Buildings', 'Parcels']}
-              onPropertySelected={(p) => dispatch({ type: 'SET_PROPERTY', payload: p })}
-              onFloorSelected={(f) => dispatch({ type: 'SET_FLOOR', payload: f })}
-              onUnitSelected={(u) => dispatch({ type: 'SET_UNIT', payload: u })}
-            />
-          </div>
+          {/* Bottom Row: Units on Selected Floor */}
+          {selectedFloor && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              paddingTop: '0.375rem',
+              borderTop: '1px dashed var(--neutral-200)',
+              flexWrap: 'wrap',
+            }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Units on {selectedFloor.name}:
+              </span>
+              <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+                {selectedFloor.units.map(unit => {
+                  const isUnitSelected = selectedUnit === unit;
+                  return (
+                    <button
+                      key={unit}
+                      onClick={() => handleUnitSelect(unit)}
+                      className={`unit-chip ${isUnitSelected ? 'selected' : ''}`}
+                      id={`unit-${unit}-btn`}
+                      style={{
+                        padding: '0.25rem 0.65rem',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        borderRadius: 4,
+                      }}
+                    >
+                      {unit}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Full-Width Spacious 3D Map Area */}
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+          <Citizen3DMapContainer
+            selectedProperty={selectedProperty}
+            selectedFloor={selectedFloor}
+            selectedUnit={selectedUnit}
+            coordinates={selectedProperty.coordinates}
+            onPropertySelected={(p) => dispatch({ type: 'SET_PROPERTY', payload: p })}
+            onFloorSelected={(f) => dispatch({ type: 'SET_FLOOR', payload: f })}
+            onUnitSelected={(u) => dispatch({ type: 'SET_UNIT', payload: u })}
+          />
         </div>
       </div>
     </div>

@@ -4,7 +4,6 @@ import { GovernmentNavbar, TopGovStrip, PageHeader } from '../../components/layo
 import { useApp } from '../../context/AppContext';
 import { propertyService, integrityService } from '../../services';
 import { Government3DMapContainer } from '../../components/maps';
-import { GISLayerControls } from '../../components/government/GISLayerControls';
 import { PropertyInfoPanel } from '../../components/government/PropertyInfoPanel';
 import { IntegrityScore } from '../../components/government/IntegrityScore';
 import { DecryptionPanel } from '../../components/government/DecryptionPanel';
@@ -13,12 +12,12 @@ import { Spinner } from '../../components/common';
 import { Search, Shield, CheckSquare, Building2, RefreshCw, AlertTriangle, Eye } from 'lucide-react';
 
 export default function GISPage() {
-  const { selectedProperty, selectedFloor, selectedUnit, activeLayers, integrityResult, validationResult, selectedConflict, dispatch, notify } = useApp();
+  const { selectedProperty, selectedFloor, selectedUnit, integrityResult, validationResult, selectedConflict, dispatch, notify } = useApp();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchStatus, setSearchStatus] = useState('idle');
-  const [activeTab, setActiveTab] = useState('layers');
+  const [activeTab, setActiveTab] = useState('property');
   const [integrityLoading, setIntegrityLoading] = useState(false);
   const [validationLoading, setValidationLoading] = useState(false);
 
@@ -104,7 +103,6 @@ export default function GISPage() {
           {/* Tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid var(--neutral-100)' }}>
             {[
-              { id: 'layers', label: 'Layers', icon: Building2 },
               { id: 'property', label: 'Property', icon: Search },
               { id: 'integrity', label: 'Integrity', icon: Shield },
             ].map(t => (
@@ -125,11 +123,6 @@ export default function GISPage() {
           </div>
 
           <div className="panel-scroll">
-            {activeTab === 'layers' && (
-              <div className="panel-section">
-                <GISLayerControls />
-              </div>
-            )}
             {activeTab === 'property' && (
               selectedProperty ? <PropertyInfoPanel compact /> : (
                 <div style={{ padding: '1.5rem 1rem', textAlign: 'center', color: 'var(--neutral-400)', fontSize: '0.8rem' }}>
@@ -191,9 +184,6 @@ export default function GISPage() {
                 <Eye size={12} /> View Issues
               </button>
             )}
-            <button className="btn btn-ghost btn-sm" style={{ justifyContent: 'center' }} onClick={() => navigate('/government/reports')} id="gen-report-from-gis-btn">
-              Generate Report →
-            </button>
           </div>
         </div>
 
@@ -201,7 +191,6 @@ export default function GISPage() {
         <div className="gis-map-area">
           <Government3DMapContainer
             selectedProperty={selectedProperty}
-            activeLayers={activeLayers}
             selectedConflict={selectedConflict}
             onPropertySelected={(p) => dispatch({ type: 'SET_PROPERTY', payload: p })}
           />

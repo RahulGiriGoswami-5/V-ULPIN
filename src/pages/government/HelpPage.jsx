@@ -1,7 +1,7 @@
 import React from 'react';
 import { GovernmentNavbar, TopGovStrip, PageHeader } from '../../components/layout';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Search, Shield, CheckSquare, BarChart2, FileText, Building2, Map, HelpCircle, ChevronRight } from 'lucide-react';
+import { BookOpen, Search, Shield, CheckSquare, FileText, Building2, Map, HelpCircle, ChevronRight } from 'lucide-react';
 
 const FAQ = [
   { q: 'What is V-ULPIN?', a: 'V-ULPIN (Vertical Unique Land Parcel Identification Number) is an extension of the existing ULPIN / Bhu-Aadhaar system. It adds a 3D vertical dimension — capturing building, floor, and unit — to uniquely identify sub-parcel entities in multi-storey properties.' },
@@ -16,8 +16,6 @@ const SHORTCUTS = [
   { label: 'GIS Dashboard', path: '/government/gis', icon: Map },
   { label: 'ULPIN Search', path: '/government/search', icon: Search },
   { label: 'Validation', path: '/government/validation', icon: CheckSquare },
-  { label: 'Analytics', path: '/government/analytics', icon: BarChart2 },
-  { label: 'Reports', path: '/government/reports', icon: FileText },
   { label: 'Land Records', path: '/government/records', icon: Building2 },
 ];
 
@@ -51,7 +49,6 @@ export default function HelpPage() {
                   { step: 4, title: 'Run Data Integrity Test', desc: 'Click "Run Data Integrity Test" to calculate the integrity score (spatial accuracy, ownership, completeness, cross-validation).' },
                   { step: 5, title: 'Run Spatial Validation', desc: 'Click "Run Spatial Validation" to detect parcel overlaps, boundary mismatches, and infrastructure conflicts.' },
                   { step: 6, title: 'Perform Infrastructure Analysis', desc: 'Use the Urban Planning section to simulate proposed construction and check against infrastructure corridors.' },
-                  { step: 7, title: 'Generate Government Report', desc: 'Navigate to Reports, select the property, and generate a full intelligence report. Download as PDF or print.' },
                 ].map(item => (
                   <div key={item.step} style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'flex-start' }}>
                     <div style={{ width: 28, height: 28, background: 'var(--navy-900)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--saffron-400)', fontSize: '0.8rem', fontWeight: 700, flexShrink: 0, marginTop: 2 }}>
