@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { CitizenNavbar, TopGovStrip } from '../../components/layout';
 import { useApp } from '../../context/AppContext';
 import { Citizen3DMapContainer } from '../../components/maps';
-import { EmptyState } from '../../components/common';
-import { Building2, CheckCircle, ArrowRight, MapPin, Layers } from 'lucide-react';
+import { EmptyState, WorkflowStepper } from '../../components/common';
+import { Building2, CheckCircle, ArrowRight, MapPin, Layers, Search } from 'lucide-react';
+import { mockProperties } from '../../data/mockProperties';
 
 export default function PropertyIdentification() {
   const { selectedProperty, selectedFloor, selectedUnit, dispatch, notify } = useApp();
@@ -12,16 +13,62 @@ export default function PropertyIdentification() {
 
   if (!selectedProperty) {
     return (
-      <div className="page">
+      <div className="page" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <TopGovStrip />
         <CitizenNavbar />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <EmptyState
-            icon={Building2}
-            title="No Property Selected"
-            description="Please search for and select a property first."
-            action={<button className="btn btn-saffron" onClick={() => navigate('/citizen/search')}>Go to Property Search</button>}
-          />
+        <WorkflowStepper currentStepId="identify" />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <div className="card" style={{ maxWidth: 520, width: '100%', textAlign: 'center', padding: '2.5rem 2rem' }}>
+            <div style={{ width: 56, height: 56, background: 'var(--saffron-100)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem', color: 'var(--saffron-600)' }}>
+              <Building2 size={28} />
+            </div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
+              Select Property for 3D Identification
+            </h2>
+            <p style={{ color: 'var(--neutral-500)', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '1.75rem' }}>
+              Choose a registered property to view the volumetric 3D building, select your vertical floor & unit, and generate your V-ULPIN.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', textAlign: 'left' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--neutral-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Quick Select Sample Property:
+              </div>
+              {mockProperties.slice(0, 3).map(prop => (
+                <div
+                  key={prop.id}
+                  onClick={() => {
+                    dispatch({ type: 'SET_PROPERTY', payload: prop });
+                    notify(`Loaded ${prop.building?.name} (${prop.location})`, 'success', 'Property Selected');
+                  }}
+                  style={{
+                    padding: '0.75rem 1rem',
+                    border: '1px solid var(--neutral-200)',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    background: 'var(--neutral-50)',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--saffron-400)'; e.currentTarget.style.background = '#fff'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--neutral-200)'; e.currentTarget.style.background = 'var(--neutral-50)'; }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--navy-900)' }}>
+                      {prop.building?.name} · {prop.location.split(',')[0]}
+                    </div>
+                    <div style={{ fontSize: '0.725rem', color: 'var(--neutral-500)', marginTop: 2 }}>
+                      {prop.oldULPIN} · {prop.building?.floors?.length} Floors
+                    </div>
+                  </div>
+                  <ArrowRight size={14} color="var(--neutral-400)" />
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-outline w-full" onClick={() => navigate('/citizen/search')}>
+              <Search size={15} /> Search by ULPIN / Parcel ID
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -41,10 +88,19 @@ export default function PropertyIdentification() {
 
   const canProceed = selectedFloor && selectedUnit;
 
+  const handleProceed = () => {
+    if (!canProceed) {
+      notify('Please select a floor and unit before proceeding to generate V-ULPIN.', 'warning', 'Selection Required');
+      return;
+    }
+    navigate('/citizen/generate');
+  };
+
   return (
     <div className="page" style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <TopGovStrip />
       <CitizenNavbar />
+      <WorkflowStepper currentStepId="identify" />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}

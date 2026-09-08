@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CitizenNavbar, TopGovStrip } from '../../components/layout';
 import { useApp } from '../../context/AppContext';
 import { propertyService } from '../../services';
-import { Spinner, StatusBadge } from '../../components/common';
+import { Spinner, StatusBadge, WorkflowStepper } from '../../components/common';
 import { Search, MapPin, ChevronRight, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function PropertySearch() {
@@ -14,13 +14,13 @@ export default function PropertySearch() {
   const [result, setResult] = useState(null);
   const [activeTab, setActiveTab] = useState('ulpin');
 
-  const { dispatch, notify } = useApp();
+  const { selectedProperty, dispatch, notify } = useApp();
   const navigate = useNavigate();
 
   const doSearch = async (searchFn, label) => {
     setStatus('searching');
     setResult(null);
-    await new Promise(r => setTimeout(r, 900));
+    await new Promise(r => setTimeout(r, 600));
     const found = searchFn();
     if (found) {
       setResult(found);
@@ -61,6 +61,7 @@ export default function PropertySearch() {
     <div className="page">
       <TopGovStrip />
       <CitizenNavbar />
+      <WorkflowStepper />
 
       <div style={{ flex: 1, maxWidth: 760, margin: '0 auto', padding: '2rem 1.5rem', width: '100%' }}>
         <div style={{ marginBottom: '1.75rem' }}>
@@ -69,6 +70,37 @@ export default function PropertySearch() {
             Enter your Old ULPIN, Parcel ID or Survey Number to locate your property.
           </p>
         </div>
+
+        {/* Currently Selected Property Resume Card (if exists) */}
+        {selectedProperty && (
+          <div className="card" style={{ marginBottom: '1.5rem', border: '1px solid var(--saffron-200)', background: 'var(--saffron-50)' }}>
+            <div className="card-body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div style={{ width: 36, height: 36, background: 'var(--saffron-500)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+                  <MapPin size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--saffron-800)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Currently Active Property
+                  </div>
+                  <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.95rem' }}>
+                    {selectedProperty.location}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--neutral-600)', marginTop: '0.15rem' }}>
+                    {selectedProperty.oldULPIN} · {selectedProperty.parcelId} · {selectedProperty.building?.name}
+                  </div>
+                </div>
+              </div>
+              <button
+                className="btn btn-saffron"
+                onClick={() => navigate('/citizen/property')}
+                id="resume-property-btn"
+              >
+                Continue to 3D Identification <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Search Card */}
         <div className="card" style={{ marginBottom: '1.5rem' }}>

@@ -41,16 +41,60 @@ export const useAuth = () => useContext(AuthContext);
 // ── App Context (global state) ───────────────────────────────
 const AppContext = createContext(null);
 
+const WORKFLOW_STORAGE_KEY = 'vulpin_workflow_state';
+
+function loadPersistedWorkflow() {
+  try {
+    const raw = localStorage.getItem(WORKFLOW_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveWorkflowToStorage(state) {
+  try {
+    const dataToSave = {
+      selectedProperty: state.selectedProperty,
+      selectedFloor: state.selectedFloor,
+      selectedUnit: state.selectedUnit,
+      generatedVULPIN: state.generatedVULPIN,
+      encryptedVULPIN: state.encryptedVULPIN,
+      decryptedVULPIN: state.decryptedVULPIN,
+      encryptionStatus: state.encryptionStatus,
+      currentStep: state.currentStep,
+      completedSteps: state.completedSteps,
+    };
+    localStorage.setItem(WORKFLOW_STORAGE_KEY, JSON.stringify(dataToSave));
+  } catch (e) {
+    console.error('Failed to persist workflow state', e);
+  }
+}
+
+const persisted = loadPersistedWorkflow();
+
+// compute initial completed steps based on existing data
+const initialCompleted = [];
+if (persisted.selectedProperty) initialCompleted.push('search');
+if (persisted.selectedProperty && persisted.selectedFloor && persisted.selectedUnit) initialCompleted.push('identify');
+if (persisted.generatedVULPIN) initialCompleted.push('generate');
+if (persisted.encryptedVULPIN) initialCompleted.push('secure');
+
 const initialAppState = {
   // Property selection
-  selectedProperty: null,
-  selectedFloor: null,
-  selectedUnit: null,
+  selectedProperty: persisted.selectedProperty || null,
+  selectedFloor: persisted.selectedFloor || null,
+  selectedUnit: persisted.selectedUnit || null,
 
   // V-ULPIN lifecycle
-  generatedVULPIN: null,
-  encryptedVULPIN: null,
-  decryptedVULPIN: null,
+  generatedVULPIN: persisted.generatedVULPIN || null,
+  encryptedVULPIN: persisted.encryptedVULPIN || null,
+  decryptedVULPIN: persisted.decryptedVULPIN || null,
+  encryptionStatus: persisted.encryptionStatus || (persisted.encryptedVULPIN ? 'encrypted' : 'idle'),
+
+  // Workflow tracking
+  currentStep: persisted.currentStep || 'search',
+  completedSteps: persisted.completedSteps || initialCompleted,
 
   // GIS layers
   activeLayers: ['Buildings', 'Parcels', 'Roads'],
@@ -79,28 +123,127 @@ const initialAppState = {
 };
 
 const appReducer = (state, action) => {
+  let nextState;
   switch (action.type) {
-    case 'SET_PROPERTY':
-      return {
+    case 'SET_PROPERTY': {
+      const isSameProp = state.selectedProperty?.id === action.payload?.id;
+      const completed = new Set(state.completedSteps || []);
+      if (action.payload) {
+        completed.add('search');
+      } else {
+        completed.delete('search');
+        completed.delete('identify');
+        completed.delete('generate');
+        completed.delete('secure');
+      }
+
+      nextState = {
         ...state,
         selectedProperty: action.payload,
-        selectedFloor: null,
-        selectedUnit: null,
-        generatedVULPIN: null,
-        encryptedVULPIN: null,
+        selectedFloor: isSameProp ? state.selectedFloor : null,
+        selectedUnit: isSameProp ? state.selectedUnit : null,
+        generatedVULPIN: isSameProp ? state.generatedVULPIN : null,
+        encryptedVULPIN: isSameProp ? state.encryptedVULPIN : null,
+        encryptionStatus: isSameProp ? state.encryptionStatus : 'idle',
         integrityResult: null,
         validationResult: null,
+        completedSteps: Array.from(completed),
       };
-    case 'SET_FLOOR':
-      return { ...state, selectedFloor: action.payload, selectedUnit: null, generatedVULPIN: null };
-    case 'SET_UNIT':
-      return { ...state, selectedUnit: action.payload, generatedVULPIN: null };
-    case 'SET_VULPIN':
-      return { ...state, generatedVULPIN: action.payload };
-    case 'SET_ENCRYPTED_VULPIN':
-      return { ...state, encryptedVULPIN: action.payload };
+      saveWorkflowToStorage(nextState);
+      return nextState;
+    }
+
+    case 'SET_FLOOR': {
+      const isSameFloor = state.selectedFloor?.id === action.payload?.id;
+      const completed = new Set(state.completedSteps || []);
+      if (!isSameFloor) {
+        completed.delete('identify');
+        completed.delete('generate');
+        completed.delete('secure');
+      }
+
+      nextState = { 
+        ...state, 
+        selectedFloor: action.payload, 
+        selectedUnit: isSameFloor ? state.selectedUnit : null, 
+        generatedVULPIN: isSameFloor ? state.generatedVULPIN : null,
+        encryptedVULPIN: isSameFloor ? state.encryptedVULPIN : null,
+        encryptionStatus: isSameFloor ? state.encryptionStatus : 'idle',
+        completedSteps: Array.from(completed),
+      };
+      saveWorkflowToStorage(nextState);
+      return nextState;
+    }
+
+    case 'SET_UNIT': {
+      const isSameUnit = state.selectedUnit === action.payload;
+      const completed = new Set(state.completedSteps || []);
+      if (state.selectedProperty && state.selectedFloor && action.payload) {
+        completed.add('identify');
+      } else {
+        completed.delete('identify');
+        completed.delete('generate');
+        completed.delete('secure');
+      }
+
+      nextState = { 
+        ...state, 
+        selectedUnit: action.payload, 
+        generatedVULPIN: isSameUnit ? state.generatedVULPIN : null,
+        encryptedVULPIN: isSameUnit ? state.encryptedVULPIN : null,
+        encryptionStatus: isSameUnit ? state.encryptionStatus : 'idle',
+        completedSteps: Array.from(completed),
+      };
+      saveWorkflowToStorage(nextState);
+      return nextState;
+    }
+
+    case 'SET_VULPIN': {
+      const completed = new Set(state.completedSteps || []);
+      if (action.payload) {
+        completed.add('generate');
+      } else {
+        completed.delete('generate');
+        completed.delete('secure');
+      }
+
+      nextState = { 
+        ...state, 
+        generatedVULPIN: action.payload,
+        completedSteps: Array.from(completed),
+      };
+      saveWorkflowToStorage(nextState);
+      return nextState;
+    }
+
+    case 'SET_ENCRYPTED_VULPIN': {
+      const completed = new Set(state.completedSteps || []);
+      if (action.payload) {
+        completed.add('secure');
+      } else {
+        completed.delete('secure');
+      }
+
+      nextState = { 
+        ...state, 
+        encryptedVULPIN: action.payload,
+        encryptionStatus: action.payload ? 'encrypted' : 'idle',
+        completedSteps: Array.from(completed),
+      };
+      saveWorkflowToStorage(nextState);
+      return nextState;
+    }
+
     case 'SET_DECRYPTED_VULPIN':
-      return { ...state, decryptedVULPIN: action.payload };
+      nextState = { ...state, decryptedVULPIN: action.payload };
+      saveWorkflowToStorage(nextState);
+      return nextState;
+
+    case 'SET_WORKFLOW_STEP':
+      nextState = { ...state, currentStep: action.payload };
+      saveWorkflowToStorage(nextState);
+      return nextState;
+
     case 'TOGGLE_LAYER': {
       const layer = action.payload;
       const active = state.activeLayers.includes(layer)
@@ -130,8 +273,27 @@ const appReducer = (state, action) => {
       return { ...state, notifications: [...state.notifications, { ...action.payload, id: Date.now() }] };
     case 'REMOVE_NOTIFICATION':
       return { ...state, notifications: state.notifications.filter(n => n.id !== action.payload) };
-    case 'RESET_PROPERTY_STATE':
-      return { ...state, selectedProperty: null, selectedFloor: null, selectedUnit: null, generatedVULPIN: null, encryptedVULPIN: null, integrityResult: null, validationResult: null };
+    case 'RESET_PROPERTY_STATE': {
+      try {
+        localStorage.removeItem(WORKFLOW_STORAGE_KEY);
+      } catch (e) {
+        console.error(e);
+      }
+      return { 
+        ...state, 
+        selectedProperty: null, 
+        selectedFloor: null, 
+        selectedUnit: null, 
+        generatedVULPIN: null, 
+        encryptedVULPIN: null, 
+        decryptedVULPIN: null,
+        encryptionStatus: 'idle',
+        currentStep: 'search',
+        completedSteps: [],
+        integrityResult: null, 
+        validationResult: null 
+      };
+    }
     default:
       return state;
   }

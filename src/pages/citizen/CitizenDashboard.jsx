@@ -13,7 +13,7 @@ const WORKFLOW_STEPS = [
 
 export default function CitizenDashboard() {
   const { user } = useAuth();
-  const { selectedProperty, selectedFloor, selectedUnit, generatedVULPIN, encryptedVULPIN } = useApp();
+  const { selectedProperty, selectedFloor, selectedUnit, generatedVULPIN, encryptedVULPIN, dispatch, notify } = useApp();
   const navigate = useNavigate();
 
   const getStepStatus = (idx) => {
@@ -22,6 +22,56 @@ export default function CitizenDashboard() {
     if (idx === 2) return generatedVULPIN ? 'complete' : (selectedProperty && selectedUnit) ? 'active' : 'pending';
     if (idx === 3) return encryptedVULPIN ? 'complete' : generatedVULPIN ? 'active' : 'pending';
     return 'pending';
+  };
+
+  const handleStepNav = (step, idx) => {
+    const status = getStepStatus(idx);
+    if (status === 'complete' || status === 'active') {
+      navigate(step.path);
+      return;
+    }
+
+    if (idx === 1 && !selectedProperty) {
+      notify('Please select a property first.', 'warning', 'Property Required');
+      navigate('/citizen/search');
+    } else if (idx === 2 && (!selectedFloor || !selectedUnit)) {
+      notify('Please select your floor and unit in 3D first.', 'warning', 'Unit Required');
+      navigate('/citizen/property');
+    } else if (idx === 3 && !generatedVULPIN) {
+      notify('Please generate your V-ULPIN first.', 'warning', 'V-ULPIN Required');
+      if (selectedProperty && selectedFloor && selectedUnit) {
+        navigate('/citizen/generate');
+      } else {
+        navigate('/citizen/property');
+      }
+    } else {
+      navigate(step.path);
+    }
+  };
+
+  const handleCardClick = (item) => {
+    if (item.path === '/citizen/search') {
+      navigate('/citizen/search');
+    } else if (item.path === '/citizen/property') {
+      navigate('/citizen/property');
+    } else if (item.path === '/citizen/generate') {
+      if (selectedProperty && selectedFloor && selectedUnit) {
+        navigate('/citizen/generate');
+      } else {
+        notify('Please select your property, floor, and unit in 3D first.', 'warning', 'Action Required');
+        navigate('/citizen/property');
+      }
+    } else if (item.path === '/citizen/secure') {
+      if (generatedVULPIN) {
+        navigate('/citizen/secure');
+      } else if (selectedProperty && selectedFloor && selectedUnit) {
+        notify('Please generate your V-ULPIN first.', 'warning', 'Action Required');
+        navigate('/citizen/generate');
+      } else {
+        notify('Please identify your property and generate V-ULPIN first.', 'warning', 'Action Required');
+        navigate('/citizen/property');
+      }
+    }
   };
 
   const getNextAction = () => {
@@ -52,8 +102,22 @@ export default function CitizenDashboard() {
 
         {/* Workflow progress */}
         <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <div className="card-header">
+          <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h3 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--neutral-700)' }}>Your Progress</h3>
+            {selectedProperty && (
+              <button
+                className="btn btn-ghost btn-sm"
+                style={{ fontSize: '0.75rem', color: 'var(--neutral-500)', padding: '0.2rem 0.5rem' }}
+                onClick={() => {
+                  dispatch({ type: 'RESET_PROPERTY_STATE' });
+                  notify('Workflow reset. You can start fresh.', 'info', 'Reset Complete');
+                }}
+                id="reset-workflow-btn"
+                title="Reset workflow progress and clear saved state"
+              >
+                Reset Progress
+              </button>
+            )}
           </div>
           <div className="card-body">
             <div className="workflow-steps">
@@ -61,7 +125,12 @@ export default function CitizenDashboard() {
                 const status = getStepStatus(idx);
                 return (
                   <React.Fragment key={step.path}>
-                    <div className="workflow-step" onClick={() => navigate(step.path)} style={{ cursor: 'pointer' }}>
+                    <div 
+                      className="workflow-step" 
+                      onClick={() => handleStepNav(step, idx)} 
+                      style={{ cursor: 'pointer' }}
+                      id={`dashboard-step-${idx}`}
+                    >
                       <div className={`workflow-step-dot ${status}`}>
                         {status === 'complete' ? <CheckCircle size={14} /> : idx + 1}
                       </div>
@@ -167,7 +236,8 @@ export default function CitizenDashboard() {
               key={item.path}
               className="card"
               style={{ padding: '1rem', cursor: 'pointer', border: '1px solid var(--neutral-200)', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', background: '#fff', transition: 'all 0.2s' }}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleCardClick(item)}
+              id={`quick-card-${item.label.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--navy-600)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--neutral-200)'; e.currentTarget.style.boxShadow = ''; }}
             >

@@ -105,3 +105,5 @@ export function StatusBadge({ status }) {
 export function Spinner({ size = '', white = false }) {
   return <div className={`spinner ${size ? `spinner-${size}` : ''} ${white ? 'spinner-white' : ''}`} />;
 }
+
+export { WorkflowStepper } from './WorkflowStepper';

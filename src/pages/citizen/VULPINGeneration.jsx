@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CitizenNavbar, TopGovStrip } from '../../components/layout';
 import { useApp } from '../../context/AppContext';
 import { vulpinService } from '../../services';
-import { EmptyState, Spinner } from '../../components/common';
+import { EmptyState, Spinner, WorkflowStepper } from '../../components/common';
 import { Shield, CheckCircle, Copy, ArrowRight, AlertCircle, Building2 } from 'lucide-react';
 
 const STEPS = [
@@ -18,20 +18,21 @@ const STEPS = [
 export default function VULPINGeneration() {
   const { selectedProperty, selectedFloor, selectedUnit, generatedVULPIN, dispatch, notify } = useApp();
   const navigate = useNavigate();
-  const [genStatus, setGenStatus] = useState('idle'); // idle | generating | done
+  const [genStatus, setGenStatus] = useState(generatedVULPIN ? 'done' : 'idle'); // idle | generating | done
   const [currentStep, setCurrentStep] = useState(-1);
-  const [completedSteps, setCompletedSteps] = useState([]);
+  const [completedSteps, setCompletedSteps] = useState(generatedVULPIN ? [0, 1, 2, 3, 4, 5] : []);
 
   if (!selectedProperty || !selectedFloor || !selectedUnit) {
     return (
       <div className="page">
         <TopGovStrip />
         <CitizenNavbar />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <WorkflowStepper currentStepId="generate" />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
           <EmptyState
             icon={AlertCircle}
-            title="Property Not Identified"
-            description="Please select a property, floor, and unit before generating V-ULPIN."
+            title="Property & Unit Not Identified"
+            description="Please select a property, floor, and unit in 3D before generating V-ULPIN."
             action={<button className="btn btn-saffron" onClick={() => navigate('/citizen/property')}>Go to 3D Identification</button>}
           />
         </div>
@@ -46,13 +47,14 @@ export default function VULPINGeneration() {
 
     for (let i = 0; i < STEPS.length; i++) {
       setCurrentStep(i);
-      await new Promise(r => setTimeout(r, 600 + Math.random() * 300));
+      await new Promise(r => setTimeout(r, 450 + Math.random() * 200));
       setCompletedSteps(prev => [...prev, i]);
     }
 
     const vulpin = vulpinService.generateVULPIN(selectedProperty, selectedFloor, selectedUnit);
     dispatch({ type: 'SET_VULPIN', payload: vulpin });
     setGenStatus('done');
+    notify('V-ULPIN generated successfully and linked to property.', 'success', 'V-ULPIN Generated');
   };
 
   const handleCopy = () => {
@@ -73,6 +75,7 @@ export default function VULPINGeneration() {
     <div className="page">
       <TopGovStrip />
       <CitizenNavbar />
+      <WorkflowStepper currentStepId="generate" />
 
       <div style={{ flex: 1, maxWidth: 700, margin: '0 auto', padding: '2rem 1.5rem', width: '100%' }}>
         <div style={{ marginBottom: '1.75rem' }}>

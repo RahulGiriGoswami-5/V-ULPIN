@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { CitizenNavbar, TopGovStrip } from '../../components/layout';
 import { useApp } from '../../context/AppContext';
 import { vulpinService } from '../../services';
-import { EmptyState, Spinner } from '../../components/common';
-import { Lock, Copy, CheckCircle, ArrowRight, Shield, AlertCircle, Eye, EyeOff, Send, Key } from 'lucide-react';
+import { EmptyState, Spinner, WorkflowStepper } from '../../components/common';
+import { Lock, Copy, CheckCircle, ArrowRight, Shield, AlertCircle, Eye, EyeOff, Send, Key, LayoutDashboard } from 'lucide-react';
 
 export default function SecureVULPIN() {
   const { selectedProperty, selectedFloor, selectedUnit, generatedVULPIN, encryptedVULPIN, dispatch, notify } = useApp();
   const navigate = useNavigate();
-  const [encryptStatus, setEncryptStatus] = useState('idle'); // idle | encrypting | done
-  const [activeTab, setActiveTab] = useState('view');
+  const [encryptStatus, setEncryptStatus] = useState(encryptedVULPIN ? 'done' : 'idle'); // idle | encrypting | done
+  const [activeTab, setActiveTab] = useState(encryptedVULPIN ? 'encrypt' : 'view');
   const [showRaw, setShowRaw] = useState(false);
   const [copiedField, setCopiedField] = useState('');
 
@@ -19,11 +19,12 @@ export default function SecureVULPIN() {
       <div className="page">
         <TopGovStrip />
         <CitizenNavbar />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <WorkflowStepper currentStepId="secure" />
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
           <EmptyState
             icon={AlertCircle}
             title="V-ULPIN Not Generated"
-            description="Please generate your V-ULPIN first."
+            description="Please identify your property and generate your V-ULPIN first."
             action={<button className="btn btn-saffron" onClick={() => navigate('/citizen/generate')}>Generate V-ULPIN</button>}
           />
         </div>
@@ -44,18 +45,19 @@ export default function SecureVULPIN() {
 
   const handleEncrypt = async () => {
     setEncryptStatus('encrypting');
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 900));
     const encrypted = vulpinService.encryptVULPIN(generatedVULPIN);
     dispatch({ type: 'SET_ENCRYPTED_VULPIN', payload: encrypted });
     setEncryptStatus('done');
-    setActiveTab('encrypted');
-    notify('V-ULPIN encrypted successfully.', 'success', 'Encrypted');
+    setActiveTab('encrypt');
+    notify('V-ULPIN secured and encrypted successfully.', 'success', 'Secured & Encrypted');
   };
 
   return (
     <div className="page">
       <TopGovStrip />
       <CitizenNavbar />
+      <WorkflowStepper currentStepId="secure" />
 
       <div style={{ flex: 1, maxWidth: 720, margin: '0 auto', padding: '2rem 1.5rem', width: '100%' }}>
         <div style={{ marginBottom: '1.75rem' }}>
@@ -223,12 +225,20 @@ export default function SecureVULPIN() {
                     ))}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <button className="btn btn-outline flex-1" onClick={() => copyToClipboard(encryptedVULPIN, 'Transfer Data')} id="copy-transfer-btn">
                       <Copy size={14} /> Copy Transfer Data
                     </button>
-                    <button className="btn btn-success flex-1" id="transfer-complete-btn" onClick={() => notify('Transfer packet ready. Submit to the Government portal.', 'success', 'Transfer Ready')}>
-                      <CheckCircle size={14} /> Mark as Submitted
+                    <button 
+                      className="btn btn-success flex-1" 
+                      id="transfer-complete-btn" 
+                      onClick={() => {
+                        dispatch({ type: 'SET_ENCRYPTED_VULPIN', payload: encryptedVULPIN });
+                        notify('Transfer packet verified and submitted successfully.', 'success', 'Submitted');
+                        navigate('/citizen/dashboard');
+                      }}
+                    >
+                      <CheckCircle size={14} /> Mark as Submitted & Finish
                     </button>
                   </div>
                 </>
